@@ -9,8 +9,8 @@
   (:gen-class))
 
 (defn fmt [out string & args]
-  (cl-format *out* (str "out=> " string) args)
-  (cl-format out string args))
+  (apply cl-format *out* (str "out=> " string) args)
+  (apply cl-format out string args))
 
 (defn ert->clj [str]
   (-> str
@@ -19,13 +19,13 @@
 
 (defn connector [vals]
   (let [lguy (atom nil)]
-    (with-open [s (Socket. "localhost" 1055)]
+    (with-open [s (Socket. (:localhost vals) (:port vals))]
       (let [lcount (atom 0)]
         (with-open [in (io/reader s)
                     out (io/writer s)]
           (fmt out "[~{~A~^, ~}].~%"
                (map (assoc vals :c "cognitive")
-                    [:generations :population :selection-type
+                    [:generations :population :type
                      :tournament-size :tournament-luck :scale
                      :mix-type :mix-factor :c :mutation-p :sigma-divisor]))
           (doseq [line (line-seq in)]
@@ -50,7 +50,7 @@
              ["-g" "--generations" "Generation count"
               :default 100 :parse-fn #(Integer/parseInt %)]
              ["-p" "--population" "The population size"
-              :default 100 :parse-fn #(Integer/parseInt %)]
+              :default 200 :parse-fn #(Integer/parseInt %)]
              ["-t" "--type" "Selection type"
               :default "roulette"]
              ["-T" "--tournament-size" "Tournament size"
@@ -62,14 +62,15 @@
              ["-m" "--mix-type" "Mix type" :default "generational_mixing"]
              ["-M" "--mix-factor" "Mix factor"
               :default 100 :parse-fn #(Integer/parseInt %)]
-             ["--mutation-p" "Mutation probability" :default 5
-              :parse-fn #(Integer/parseInt %)]
+             ["--mutation-p" "Mutation probability" :default 0.5
+              :parse-fn #(Double/parseDouble %)]
              ["--sigma-divisor" "Sigma divisor" :default 10.0
               :parse-fn #(Double/parseDouble %)]
              ["-h" "--help" "Show help" :default false :flag :true])]
     (when (or (:help opts) (empty? args))
       (println banner)
-      (System/exit 0)))
+      (System/exit 0))
+    (connector opts))
   #_
   
   (in-term
