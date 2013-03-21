@@ -22,15 +22,16 @@
 (defn draw-object [object]
   (let [{:keys [color char y x length]} object]
     (t/set-fg-color *t* color)
-    (t/move-cursor *t* (inc x) (inc y))
     (dotimes [i length]
+      (t/move-cursor *t* (inc (mod (+ x i) v/*area-width*)) (inc y))
       (t/put-character *t* char))))
 
 (defn draw-simulation [objects]
   (t/clear *t*)
   (draw-border)
   (doseq [obj objects]
-    (draw-object obj)))
+    (draw-object obj))
+  (t/move-cursor *t* 0 0))
 
 (defn get-key []
   (t/get-key-blocking *t*))
