@@ -6,7 +6,6 @@
 
 (defn draw-border []
   (t/set-fg-color *t* :white)
-  (t/set-bg-color *t* :black)
   (t/move-cursor *t* 0 0)
   (dotimes [x (+ v/*area-width* 2)]
     (t/put-character *t* \#))
