@@ -38,9 +38,12 @@
                    (seq)
                    (cl-format nil "=> ~{~{~s: ~8,5f~}~^, ~}")
                    (println @lcount)))))))
-    (in-term
-     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
-       (trampoline #(sim/draw-state state))))))
+    (let [state (-> @lguy nn/translate-cluster sim/init-state)]
+      (in-term
+       (trampoline #(sim/draw-state state)))
+      (println "The optimal genotype is printed below (human-readable).")
+      (println "Put it in a file to rerun! (By using --rerun filename)")
+      (pp/pprint (-> @lguy nn/translate-cluster)))))
 
 (defn -main
   "Basic connector to Genetica."
@@ -71,8 +74,15 @@
               :parse-fn #(Double/parseDouble %)]
              ["--crossover-rate" "Crossover rate." :default 0.9
               :parse-fn #(Double/parseDouble %)]
+             ["--rerun" "Rerun a genotype by specifying its filename."
+              :default nil]
              ["-h" "--help" "Show help" :default false :flag :true])]
     (when (:help opts)
       (println banner)
       (System/exit 0))
+    (when (:rerun opts)
+      (let [state (-> opts :rerun slurp read-string sim/init-state)]
+        (in-term
+         (trampoline #(sim/draw-state state)))
+        (System/exit 0)))
     (connector opts)))
