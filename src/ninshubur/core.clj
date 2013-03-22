@@ -37,7 +37,9 @@
                    (seq)
                    (cl-format nil "=> ~{~{~s: ~8,5f~}~^, ~}")
                    (println @lcount)))))))
-    (println (nn/translate-cluster @lguy))))
+    (in-term
+     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
+       (trampoline #(sim/draw-state state))))))
 
 (defn -main
   "Basic connector to Genetica."
@@ -67,12 +69,7 @@
              ["--sigma-divisor" "Sigma divisor" :default 10.0
               :parse-fn #(Double/parseDouble %)]
              ["-h" "--help" "Show help" :default false :flag :true])]
-    (when (or (:help opts) (empty? args))
+    (when (:help opts)
       (println banner)
       (System/exit 0))
-    (connector opts))
-  #_
-  
-  (in-term
-   (let [state (-> "testcase" slurp read-string sim/init-state)]
-     (trampoline #(sim/draw-state state)))))
+    (connector opts)))
