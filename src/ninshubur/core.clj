@@ -27,7 +27,8 @@
                (map (assoc vals :c "cognitive")
                     [:generations :population :type
                      :tournament-size :tournament-luck :scale
-                     :mix-type :mix-factor :c :mutation-p :sigma-divisor]))
+                     :mix-type :mix-factor :c :mutation-p :sigma-divisor
+                     :crossover-rate]))
           (doseq [line (line-seq in)]
             (let [res (read-string (ert->clj line))]
               (swap! lcount inc)
@@ -67,6 +68,8 @@
              ["--mutation-p" "Mutation probability" :default 0.5
               :parse-fn #(Double/parseDouble %)]
              ["--sigma-divisor" "Sigma divisor" :default 10.0
+              :parse-fn #(Double/parseDouble %)]
+             ["--crossover-rate" "Crossover rate." :default 0.9
               :parse-fn #(Double/parseDouble %)]
              ["-h" "--help" "Show help" :default false :flag :true])]
     (when (:help opts)
