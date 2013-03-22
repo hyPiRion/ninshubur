@@ -20,10 +20,4 @@
                            (map translate-vertex vertices))]
     (merge edge-map vertex-map)))
 
-(defn clamp [cur min max]
-  (max min (min cur max)))
 
-(defn delta-movement [outputs]
-  (let [c (get-in outputs [:c :o])
-        d (get-in outputs [:d :o])]
-    (-> (- c d) (* 5) (clamp -4 4))))
