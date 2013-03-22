@@ -1,7 +1,17 @@
 (ns ninshubur.simulate
   (:require [ninshubur.term :as t :refer [*t*]]
             [lanterna.terminal :as tty]
-            [ninshubur.vars :as v]))
+            [ninshubur.vars :as v]
+            [clojure.pprint :as pp]))
+
+
+;;; Initialization
+
+(def empty-vertices
+  {:a {:o 0 :y 0}
+   :b {:o 0 :y 0}
+   :c {:o 0 :y 0}
+   :d {:o 0 :y 0}})
 
 (defn make-block []
   (let [len (inc (rand-int v/*block-max-size*))
@@ -17,16 +27,108 @@
 (defn init-state [neuron-cluster]
   (merge neuron-cluster
          {:time 0
-          :hist [{:tracker (init-tracker)
-                  :block (make-block)
-                  :a {:o 0 :y 0}
-                  :b {:o 0 :y 0}
-                  :c {:o 0 :y 0}
-                  :d {:o 0 :y 0}}]}))
+          :hist [(merge {:tracker (init-tracker)
+                         :block (make-block)}
+                        empty-vertices)]}))
 
-(defn start-term [state]
+;;; Updating state
+
+(defn edge-from [x]
+  (cond (#{:a :b} x) (list* :a :b (range v/*tracker-size*))
+        (#{:c :d} x) (list :a :b :c :d)))
+
+(defn senses [{l :length, pos :x} at]
+  (let [nat (mod at v/*area-width*)]
+    (->> (range pos (+ pos l))
+         (mapv #(mod % v/*area-width*))
+         (some #{nat})
+         (boolean))))
+
+(defn sense [prev]
+  (let [block (:block prev)
+        pos (get-in prev [:tracker :x])]
+    (mapv (partial senses block)
+          (range pos (+ pos v/*tracker-size*)))))
+
+(defn new-vstate [state senses node-name]
+  (let [t (:time state)
+        edges (for [f (edge-from node-name)]
+                [f node-name])
+        e+w (mapv (juxt identity state) edges)
+        sum (reduce + (for [[[from to] w] e+w]
+                        (if (integer? from)
+                          (if (senses from) w 0)
+                          (* w (get-in state [:hist t from :o])))))
+        {o- :o, y- :y} (get-in state [:hist t node-name])
+        {tau :tau, sigma :sigma, g :gain} (get state node-name)
+        dy (double (/ (- (+ sum sigma) y-) tau))
+        y (+ y- dy)
+        o (/ (+ 1.0 (Math/exp (- (* g y)))))]
+    {:o o, :y y}))
+
+(defn clamp [cur min- max-]
+  (max min- (min cur max-)))
+
+(defn actuate [state] ;; returns new position of tracker
+  (let [t (:time state)
+        c (get-in state [:hist t :c :o])
+        d (get-in state [:hist t :d :o])
+        old-pos (get-in state [:hist t :tracker :x])]
+    (-> (- d c) (* 5) (double) (Math/round) (int)
+        (clamp -4 4) (+ old-pos) (mod v/*area-width*))))
+
+(defn next-step [state]
+  (let [t (:time state)
+        sensed (sense (get-in state [:hist t]))
+        node-states (apply merge
+                           (for [node [:a :b :c :d]]
+                             {node (new-vstate state sensed node)}))
+        tracker-pos (actuate state)
+        new-pos (-> (get-in state [:hist t])
+                    (update-in [:block :y] inc)
+                    (assoc-in [:tracker :x] tracker-pos)
+                    (merge node-states))]
+    (-> state
+        (update-in [:hist] conj new-pos)
+        (update-in [:time] inc))))
+
+(defn reset-state [prev]
+  (-> prev
+      (merge empty-vertices)
+      (assoc :block (make-block))))
+
+(defn new-state [state]
+  (let [t (:time state)
+        prev (get-in state [:hist t])
+        {y :y :as block} (:block prev)]
+    (if (== y (dec v/*area-height*))
+      (update-in state [:hist] conj (reset-state prev))
+      (next-step state))))
+
+;; Visualisation part.
+
+(declare inc-state dec-state)
+
+(defn draw-state [state]
   (let [time (:time state)
         block (get-in state [:hist time :block])
         tracker (get-in state [:hist time :tracker])]
-    (t/draw-simulation #{block tracker})
-    (while (not= \q (t/get-key)))))
+    (t/draw-simulation [tracker block])
+    (case (t/get-key)
+      \q state
+      :right #(inc-state state)
+      :left #(dec-state state)
+      #(draw-state state))))
+
+(defn inc-state [state]
+  (let [t (min (inc (:time state))
+               (* v/*nof-blocks* v/*area-height*))]
+    (if-not (contains? (:hist state) t)
+      (let [nstate (new-state state)]
+        #(draw-state nstate))
+      #(draw-state (assoc state :time t)))))
+
+(defn dec-state [state]
+  (let [t (max (dec (:time state)) 0)
+        nstate (assoc state :time t)]
+    #(draw-state nstate)))
