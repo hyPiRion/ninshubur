@@ -37,7 +37,8 @@
                    (zipmap [:avg :stddev :max :min])
                    (seq)
                    (mapv (fn [[k v]] [(-> k name symbol) v]))
-                   (cl-format nil "~4d=> ~{~{~s: ~9,5f~}~^, ~}" @lcount)))))))
+                   (cl-format true "~4d=> ~{~{~s: ~9,5f~}~^, ~}~%"
+                              @lcount)))))))
     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
       (in-term
        (trampoline #(sim/draw-state state)))
