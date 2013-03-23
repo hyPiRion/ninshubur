@@ -9,4 +9,4 @@
 ;                 [incanter "1.5.0-SNAPSHOT"
 ;                  :exclusions [incanter/incanter-mongodb]]
                  ]
-  :main ninshubur.core)
+  :main ninshubur.main)

@@ -1,4 +1,4 @@
-(ns ninshubur.core
+(ns ninshubur.main
   (:require [clojure.java.io :as io]
             [clojure.pprint :as pp :refer [cl-format]]
             [clojure.tools.cli :refer [cli]]
