@@ -28,7 +28,7 @@
                     [:generations :population :type
                      :tournament-size :tournament-luck :scale
                      :mix-type :mix-factor :c :mutation-p :sigma-divisor
-                     :crossover-rate]))
+                     :crossover-rate :fitness-fn :sim-type]))
           (doseq [line (line-seq in)]
             (let [res (read-string (ert->clj line))]
               (swap! lcount inc)
@@ -75,6 +75,10 @@
               :parse-fn #(Double/parseDouble %)]
              ["--crossover-rate" "Crossover rate." :default 0.9
               :parse-fn #(Double/parseDouble %)]
+             ["-f" "--fitness-fn" "Fitness function"
+              :default "sum"]
+             ["-s" "--sim-type" "Simulation type"
+              :default "random"]
              ["-o" "--outfile" "Save last genotype to file"
               :default nil]
              ["-i" "--rerun" "Rerun genotype by file"
