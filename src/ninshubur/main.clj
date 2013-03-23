@@ -19,7 +19,7 @@
 
 (defn connector [vals]
   (let [lguy (atom nil)]
-    (with-open [s (Socket. (:localhost vals) (:port vals))]
+    (with-open [s (Socket. (:hostname vals) (:port vals))]
       (let [lcount (atom 0)]
         (with-open [in (io/reader s)
                     out (io/writer s)]
@@ -36,9 +36,8 @@
               (->> (take 4 res)
                    (zipmap [:avg :stddev :max :min])
                    (seq)
-                   (mapv (fn [[k v]] [(name k) v]))
-                   (cl-format nil "=> ~{~{~s: ~8,5f~}~^, ~}")
-                   (println @lcount)))))))
+                   (mapv (fn [[k v]] [(-> k name symbol) v]))
+                   (cl-format nil "~4d=> ~{~{~s: ~9,5f~}~^, ~}" @lcount)))))))
     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
       (in-term
        (trampoline #(sim/draw-state state)))
