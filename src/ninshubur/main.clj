@@ -36,6 +36,7 @@
               (->> (take 4 res)
                    (zipmap [:avg :stddev :max :min])
                    (seq)
+                   (mapv (fn [[k v]] [(name k) v]))
                    (cl-format nil "=> ~{~{~s: ~8,5f~}~^, ~}")
                    (println @lcount)))))))
     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
