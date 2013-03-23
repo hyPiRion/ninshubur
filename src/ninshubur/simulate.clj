@@ -64,7 +64,8 @@
         dy (double (/ (- (+ sum sigma) y-) tau))
         y (+ y- dy)
         o (/ (+ 1.0 (Math/exp (- (* g y)))))]
-    {:o o, :y y}))
+    (assoc-in state [:hist t node-name]
+              {:o o, :y y})))
 
 (defn clamp [cur min- max-]
   (max min- (min cur max-)))
@@ -77,20 +78,21 @@
     (-> (- d c) (* 5) (double) (Math/round) (int)
         (clamp -4 4) (+ old-pos) (mod v/*area-width*))))
 
+(defn dup-last [vec]
+  (conj vec (peek vec)))
+
 (defn next-step [state]
   (let [t (:time state)
         sensed (sense (get-in state [:hist t]))
-        node-states (apply merge
-                           (for [node [:a :b :c :d]]
-                             {node (new-vstate state sensed node)}))
+        state (-> (update-in state [:hist] dup-last)
+                  (update-in [:time] inc)) ;; replicate previous, update time
+        state (reduce (fn [s n] (new-vstate s sensed n))
+                      state [:a :b :c :d])
         tracker-pos (actuate state)
-        new-pos (-> (get-in state [:hist t])
-                    (update-in [:block :y] inc)
-                    (assoc-in [:tracker :x] tracker-pos)
-                    (merge node-states))]
+        t (inc t)]
     (-> state
-        (update-in [:hist] conj new-pos)
-        (update-in [:time] inc))))
+        (update-in [:hist t :block :y] inc)
+        (assoc-in [:hist t :tracker :x] tracker-pos))))
 
 (defn reset-state [prev]
   (-> prev
