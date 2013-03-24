@@ -9,4 +9,5 @@
 ;                 [incanter "1.5.0-SNAPSHOT"
 ;                  :exclusions [incanter/incanter-mongodb]]
                  ]
-  :main ninshubur.main)
+  :main ninshubur.main
+  :uberjar-name "ninshubur.jar")
