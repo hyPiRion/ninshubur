@@ -45,12 +45,16 @@
                      (mapv (fn [[k v]] [(-> k name symbol) v]))
                      (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
                                 @lcount))))))))
+    (when (:simulation vals)
+      (let [state (-> @lguy nn/translate-cluster sim/init-state)]
         (in-term
-         (trampoline #(sim/draw-state state))))
-      (when-let [out (:outfile vals)]
-          (spit out
-           (with-out-str
-             (->> @lguy nn/translate-cluster pp/pprint)))))))
+         (trampoline #(sim/draw-state state)))))
+    (when-let [out (:outfile vals)]
+      (spit out
+            (with-out-str
+              (->> @lguy nn/translate-cluster pp/pprint))))
+    (when-let [afile (:analyze vals)]
+      (spit afile (str @history)))))
 
 (defn -main
   "Basic connector to Genetica."
@@ -79,7 +83,7 @@
               :parse-fn #(Double/parseDouble %)]
              ["--sigma-divisor" "Sigma divisor" :default 10.0
               :parse-fn #(Double/parseDouble %)]
-             ["--crossover-rate" "Crossover rate." :default 0.9
+             ["--crossover-rate" "Crossover rate" :default 0.9
               :parse-fn #(Double/parseDouble %)]
              ["-f" "--fitness-fn" "Fitness function"
               :default "sum"]
@@ -90,8 +94,10 @@
              ["-i" "--rerun" "Rerun genotype by file"
               :default nil]
              ["--repeat" "# of simulations"
-              :default 1]
-             ["--simulation" "Show simulation" :default true :flag true]
+              :default 1 :parse-fn #(Integer/parseInt %)]
+             ["--analyze" "Analyze to file"
+              :default nil]
+             ["--sim" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
     (when (:help opts)
       (println banner)
