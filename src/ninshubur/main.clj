@@ -17,8 +17,17 @@
       (.replace \{ \[)
       (.replace \} \])))
 
+(defmulti pick-best
+  (fn [old state new] (:sim-type state)))
+
+(defmethod pick-best "random" [_ _ new]
+  new)
+
+(defmethod pick-best "brute" [old _ new]
+  (max-key :fitness old new))
+
 (defn connector [vals]
-  (let [lguy (atom nil)
+  (let [bguy (atom {:fitness -1})
         history (atom [])]
     (dotimes [iter (:repeat vals)]
       (with-open [s (Socket. (:hostname vals) (:port vals))]
@@ -34,9 +43,11 @@
                        :crossover-rate :fitness-fn :sim-type]))
             (swap! history assoc iter [])
             (doseq [line (line-seq in)]
-              (let [res (read-string (ert->clj line))]
+              (let [res (read-string (ert->clj line))
+                    ptype {:fitness (nth res 2)
+                           :gene (nth res 4)}]
                 (swap! lcount inc)
-                (reset! lguy (last res))
+                (swap! bguy pick-best vals ptype)
                 ;; update a graph plotting tool here.
                 (swap! history update-in [iter] conj (vec (take 4 res)))
                 (->> (take 4 res)
@@ -45,8 +56,8 @@
                      (mapv (fn [[k v]] [(-> k name symbol) v]))
                      (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
                                 @lcount))))))))
-    (when (:simulation vals)
-      (let [state (-> @lguy nn/translate-cluster sim/init-state)]
+    (when (:sim vals)
+      (let [state (-> @lguy :gene nn/translate-cluster sim/init-state)]
         (in-term
          (trampoline #(sim/draw-state state)))))
     (when-let [out (:outfile vals)]
