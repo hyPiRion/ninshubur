@@ -18,30 +18,36 @@
       (.replace \} \])))
 
 (defn connector [vals]
-  (let [lguy (atom nil)]
-    (with-open [s (Socket. (:hostname vals) (:port vals))]
-      (let [lcount (atom 0)]
-        (with-open [in (io/reader s)
-                    out (io/writer s)]
-          (fmt out "[~{~A~^, ~}].~%"
-               (map (assoc vals :c "cognitive")
-                    [:generations :population :type
-                     :tournament-size :tournament-luck :scale
-                     :mix-type :mix-factor :c :mutation-p :sigma-divisor
-                     :crossover-rate :fitness-fn :sim-type]))
-          (doseq [line (line-seq in)]
-            (let [res (read-string (ert->clj line))]
-              (swap! lcount inc)
-              (reset! lguy (last res))
-              (->> (take 4 res)
-                   (zipmap [:avg :stddev :max :min])
-                   (seq)
-                   (mapv (fn [[k v]] [(-> k name symbol) v]))
-                   (cl-format true "~4d=> ~{~{~s: ~9,5f~}~^, ~}~%"
-                              @lcount)))))))
+  (let [lguy (atom nil)
+        history (atom [])]
+    (dotimes [iter (:repeat vals)]
+        (with-open [s (Socket. (:hostname vals) (:port vals))]
+          (let [lcount (atom 0)]
+            (with-open [in (io/reader s)
+                        out (io/writer s)]
+              (fmt out "[~{~A~^, ~}].~%"
+                   (map (assoc vals :c "cognitive")
+                        [:generations :population :type
+                         :tournament-size :tournament-luck :scale
+                         :mix-type :mix-factor :c :mutation-p :sigma-divisor
+                         :crossover-rate :fitness-fn :sim-type]))
+              (swap! history assoc iter [])
+              (doseq [line (line-seq in)]
+                (let [res (read-string (ert->clj line))]
+                  (swap! lcount inc)
+                  (reset! lguy (last res))
+                  ;; update a graph plotting tool here.
+                  (swap! history update-in [iter] conj (vec (take 4 res)))
+                  (->> (take 4 res)
+                       (zipmap [:avg :stddev :max :min])
+                       (seq)
+                       (mapv (fn [[k v]] [(-> k name symbol) v]))
+                       (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
+                                  @lcount))))))))
     (let [state (-> @lguy nn/translate-cluster sim/init-state)]
-      (in-term
-       (trampoline #(sim/draw-state state)))
+      (when (:simulation vals)
+        (in-term
+         (trampoline #(sim/draw-state state))))
       (when-let [out (:outfile vals)]
           (spit out
            (with-out-str
@@ -84,6 +90,9 @@
               :default nil]
              ["-i" "--rerun" "Rerun genotype by file"
               :default nil]
+             ["--repeat" "# of simulations"
+              :default 1]
+             ["--simulation" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
     (when (:help opts)
       (println banner)
