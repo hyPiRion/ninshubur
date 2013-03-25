@@ -117,7 +117,8 @@
              ["--sim" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
     ;; Setup bindings here
-    (binding [v/*tracker-max-speed* (:tracker-max-speed vals)]
+    (binding [v/*tracker-max-speed* (:tracker-max-speed opts)]
+      (println v/*tracker-max-speed*)
       (when (:help opts)
         (println banner)
         (System/exit 0))
