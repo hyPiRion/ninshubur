@@ -116,11 +116,14 @@
               :parse-fn #(Integer/parseInt %)]
              ["--swing" "Use swing for visualization."
               :default false :flag true]
+             ["--hidden-layer" "Use hidden layer" :default true
+              :parse-fn #(Boolean/parseBoolean %)]
              ["--sim" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
     ;; Setup bindings here
     (binding [v/*tracker-max-speed* (:tracker-max-speed opts)
-              v/*tty-type* (if (:swing opts) :swing :text)]
+              v/*tty-type* (if (:swing opts) :swing :text)
+              v/*hidden-layer?* (:hidden-layer opts)]
       (when (:help opts)
         (println banner)
         (System/exit 0))

@@ -7,3 +7,4 @@
 (def ^:dynamic *block-max-size* 6)
 (def ^:dynamic *tracker-max-speed*)
 (def ^:dynamic *tty-type*)
+(def ^:dynamic *hidden-layer?*)

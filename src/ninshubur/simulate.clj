@@ -72,8 +72,8 @@
 
 (defn actuate [state] ;; returns new position of tracker
   (let [t (:time state)
-        c (get-in state [:hist t :c :o])
-        d (get-in state [:hist t :d :o])
+        c (get-in state [:hist t (if v/*hidden-layer?* :c :a) :o])
+        d (get-in state [:hist t (if v/*hidden-layer?* :d :b) :o])
         old-pos (get-in state [:hist t :tracker :x])]
     (-> (- d c) (* (inc v/*tracker-max-speed*)) (double) (Math/round) (int)
         (clamp (- v/*tracker-max-speed*) v/*tracker-max-speed*)
