@@ -121,7 +121,6 @@
     ;; Setup bindings here
     (binding [v/*tracker-max-speed* (:tracker-max-speed opts)
               v/*tty-type* (if (:swing opts) :swing :text)]
-      (println v/*tracker-max-speed*)
       (when (:help opts)
         (println banner)
         (System/exit 0))
