@@ -4,7 +4,8 @@
             [clojure.tools.cli :refer [cli]]
             [ninshubur.neuron :as nn]
             [ninshubur.term :as t :refer [in-term]]
-            [ninshubur.simulate :as sim])
+            [ninshubur.simulate :as sim]
+            [ninshubur.utils :as utils])
   (:import (java.net Socket))
   (:gen-class))
 
@@ -57,15 +58,17 @@
                      (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
                                 @lcount))))))))
     (when (:sim vals)
-      (let [state (-> @lguy :gene nn/translate-cluster sim/init-state)]
+      (let [state (-> @bguy :gene nn/translate-cluster sim/init-state)]
         (in-term
          (trampoline #(sim/draw-state state)))))
     (when-let [out (:outfile vals)]
       (spit out
             (with-out-str
-              (->> @lguy nn/translate-cluster pp/pprint))))
+              (->> @bguy :gene nn/translate-cluster pp/pprint))))
     (when-let [afile (:analyze vals)]
-      (spit afile (str @history)))))
+      (->> (utils/transform-3d @history)
+           (cl-format nil "~{~{~f~^ ~}~%~}")
+           (spit afile)))))
 
 (defn -main
   "Basic connector to Genetica."
