@@ -5,6 +5,7 @@
             [ninshubur.neuron :as nn]
             [ninshubur.term :as t :refer [in-term]]
             [ninshubur.simulate :as sim]
+            [ninshubur.vars :as v]
             [ninshubur.utils :as utils])
   (:import (java.net Socket))
   (:gen-class))
@@ -111,14 +112,18 @@
               :default 1 :parse-fn #(Integer/parseInt %)]
              ["--analyze" "Analyze to file"
               :default nil]
+             ["--tracker-max-speed" "Max tracker speed" :default 4
+              :parse-fn #(Integer/parseInt %)]
              ["--sim" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
-    (when (:help opts)
-      (println banner)
-      (System/exit 0))
-    (when (:rerun opts)
-      (let [state (-> opts :rerun slurp read-string sim/init-state)]
-        (in-term
-         (trampoline #(sim/draw-state state)))
-        (System/exit 0)))
-    (connector opts)))
+    ;; Setup bindings here
+    (binding [v/*tracker-max-speed* (:tracker-max-speed vals)]
+      (when (:help opts)
+        (println banner)
+        (System/exit 0))
+      (when (:rerun opts)
+        (let [state (-> opts :rerun slurp read-string sim/init-state)]
+          (in-term
+           (trampoline #(sim/draw-state state)))
+          (System/exit 0)))
+      (connector opts))))

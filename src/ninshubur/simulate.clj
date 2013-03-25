@@ -75,8 +75,9 @@
         c (get-in state [:hist t :c :o])
         d (get-in state [:hist t :d :o])
         old-pos (get-in state [:hist t :tracker :x])]
-    (-> (- d c) (* 5) (double) (Math/round) (int)
-        (clamp -4 4) (+ old-pos) (mod v/*area-width*))))
+    (-> (- d c) (* (inc v/*tracker-max-speed*)) (double) (Math/round) (int)
+        (clamp (- v/*tracker-max-speed*) v/*tracker-max-speed*)
+        (+ old-pos) (mod v/*area-width*))))
 
 (defn dup-last [vec]
   (conj vec (peek vec)))
