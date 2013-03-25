@@ -5,6 +5,7 @@
 (def ^:dynamic *t*)
 (def ^:dynamic *border-char* \#)
 (def ^:dynamic *output-char* \#)
+(def ^:dynamic *alert-char* \!)
 
 (defn draw-border []
   (t/set-fg-color *t* :white)
@@ -54,10 +55,13 @@
     (dotimes [i rounded-o]
       (t/move-cursor *t* x (- y i))
       (t/put-character *t* *output-char*))
-    (t/set-fg-color *t* :blue)
-    (dotimes [i rounded-y]
+    (t/set-fg-color *t* (if (> rounded-y 6) :red :blue))
+    (dotimes [i (min rounded-y 6)]
       (t/move-cursor *t* (inc x) (- y i))
-      (t/put-character *t* *output-char*))))
+      (t/put-character *t*
+                       (if (> rounded-y 5)
+                         *alert-char*
+                         *output-char*)))))
 
 (defn draw-simulation [objects neuron-map]
   (t/clear *t*)
