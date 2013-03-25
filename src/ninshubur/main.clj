@@ -73,6 +73,70 @@
         (in-term
          (trampoline #(sim/draw-state state)))))))
 
+(def postlude
+"
+In-depth explanations:
+
+Generations specifies how many generations to run for.
+
+Population specifies how many phenotypes there will be in a single
+population.
+
+Selection type can either be \"roulette\" or \"tournament\", and is by default
+\"roulette\".
+
+Tournament size decides how many there should be in a tournament, if tournament
+selection is chosen.
+
+Scale type can be either \"sigma\", \"boltzmann\", \"fitness\" or \"rank\", and
+is only activated when there is a roulette selection.
+
+Mix type can be either \"full_replacement\", \"overproduction\" or
+\"generational_mixing\", and this specifies what kind of population mixing
+scheme is used.
+
+Mix factor does nothing when full replacement is chosen as mix type. When
+overproduction is selected, this specifies how many *additional* children which
+will be produced. When generational mixing is selected, it specifies how many
+parents will remain in the new population.
+
+Mutation probability specifies the probability that a genome will get mutated
+when generated.
+
+Sigma divisor specifies *how much* a mutation will change. The higher, the lower
+change.
+
+Crossover rate specifies the probability that a genome parameter is taken from
+the other genome when performing crossover.
+
+Simulation type specifies what kind of simulation should be done: \"rand\" is
+slow and unpredictable, whereas \"brute\" will speed up the fitness and give
+consistent results.
+
+Outfile specifies the filename where the best genotype is saved. When omitted,
+the genotype is not saved.
+
+Rerun specifies the filename of the genotype to rerun. When not specified, will
+not rerun and rather attempty to connect to Genetica instead.
+
+Analyze specifies where to spit out an analysis of the runs. Requires two or
+more runs, will otherwise crash the system. When omitted, will not do an
+analysis.
+
+Tracker max speed specifies the maximal speed of the tracker.
+
+Swing is a flag, which sets up a Swing GUI terminal instead of running inside a
+normal terminal. Use this only if you have issues with printing in the console.
+
+Hidden layer specifies whether the hidden layer of the CTRNN should be used or
+not.
+
+Sim specifies whether one should simulate or not. When set, will simulate the
+best phenotype after all runs have finished.
+
+Help shows this help output.
+")
+
 (defn -main
   "Basic connector to Genetica."
   [& args]
@@ -127,7 +191,7 @@
               v/*tty-type* (if (:swing opts) :swing :text)
               v/*hidden-layer?* (:hidden-layer opts)]
       (when (or (:help opts) (seq args))
-        (println banner)
+        (println banner postlude)
         (System/exit 0))
       (when (:rerun opts)
         (let [state (-> opts :rerun slurp read-string sim/init-state)]
