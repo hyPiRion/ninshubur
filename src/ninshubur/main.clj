@@ -28,17 +28,18 @@
 (defmethod pick-best "brute" [old _ new]
   (max-key :fitness old new))
 
-(defn connector [vals]
+(defn connector [args]
   (let [bguy (atom {:fitness -1})
         history (atom [])]
-    (dotimes [iter (:repeat vals)]
-      (with-open [s (Socket. (:hostname vals) (:port vals))]
+    (dotimes [iter (:repeat args)]
+      (with-open [s (Socket. (:hostname args) (:port args))]
         (cl-format true "Run ~r:~%" (inc iter))
         (let [lcount (atom 0)]
           (with-open [in (io/reader s)
                       out (io/writer s)]
             (fmt out "[~{~A~^, ~}].~%"
-                 (map (assoc vals :c "cognitive")
+                 (map (assoc args :c "cognitive"
+                             :fitness-fn "none")
                       [:generations :population :type
                        :tournament-size :tournament-luck :scale
                        :mix-type :mix-factor :c :mutation-p :sigma-divisor
@@ -49,7 +50,12 @@
                     ptype {:fitness (nth res 2)
                            :gene (nth res 4)}]
                 (swap! lcount inc)
-                (swap! bguy pick-best vals ptype)
+                (when (identical? (swap! bguy pick-best args ptype) @bguy)
+                  ;; You know, this is always true.
+                  (when-let [out (:outfile args)]
+                    (spit out
+                          (with-out-str
+                            (->> @bguy :gene nn/translate-cluster pp/pprint)))))
                 ;; update a graph plotting tool here.
                 (swap! history update-in [iter] conj (vec (take 4 res)))
                 (->> (take 4 res)
@@ -58,15 +64,11 @@
                      (mapv (fn [[k v]] [(-> k name symbol) v]))
                      (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
                                 @lcount))))))))
-    (when-let [out (:outfile vals)]
-      (spit out
-            (with-out-str
-              (->> @bguy :gene nn/translate-cluster pp/pprint))))
-    (when-let [afile (:analyze vals)]
+    (when-let [afile (:analyze args)]
       (->> (utils/transform-3d @history)
            (cl-format nil "~{~{~f~^ ~}~%~}")
            (spit afile)))
-    (when (:sim vals)
+    (when (:sim args)
       (let [state (-> @bguy :gene nn/translate-cluster sim/init-state)]
         (in-term
          (trampoline #(sim/draw-state state)))))))
@@ -100,8 +102,8 @@
               :parse-fn #(Double/parseDouble %)]
              ["--crossover-rate" "Crossover rate" :default 0.9
               :parse-fn #(Double/parseDouble %)]
-             ["-f" "--fitness-fn" "Fitness function"
-              :default "sum"]
+;             ["-f" "--fitness-fn" "Fitness function"
+;              :default "sum"]
              ["-s" "--sim-type" "Simulation type"
               :default "random"]
              ["-o" "--outfile" "Save last genotype to file"
@@ -124,7 +126,7 @@
     (binding [v/*tracker-max-speed* (:tracker-max-speed opts)
               v/*tty-type* (if (:swing opts) :swing :text)
               v/*hidden-layer?* (:hidden-layer opts)]
-      (when (:help opts)
+      (when (or (:help opts) (seq args))
         (println banner)
         (System/exit 0))
       (when (:rerun opts)
