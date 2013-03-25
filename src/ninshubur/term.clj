@@ -33,22 +33,30 @@
 (def neuron-positions
   {:a {:x (+ v/*area-width* 5)
        :y 5}
-   :b {:x (+ v/*area-width* 7)
+   :b {:x (+ v/*area-width* 8)
        :y 5}
    :c {:x (+ v/*area-width* 5)
-       :y 14}
-   :d {:x (+ v/*area-width* 7)
-       :y 14}})
+       :y 15}
+   :d {:x (+ v/*area-width* 8)
+       :y 15}})
 
 (defn draw-neuron-output [[neuron-name state]]
-  (let [rounded (-> state :o (* 5) (double) (Math/round) (int))
+  (let [rounded-o (-> state :o (* 5) (double) (Math/round) (int))
+        rounded-y (-> state :y (* 5) (double) (Math/round) (int))
         {:keys [x y]} (neuron-positions neuron-name)]
-    (t/move-cursor *t* x (inc y))
     (t/set-fg-color *t* :white)
-    (t/put-string *t* (name neuron-name))
-    (t/set-fg-color *t* (output-color rounded))
-    (dotimes [i rounded]
+    (t/move-cursor *t* x (inc y))
+    (t/put-string *t* "oy")
+    (t/move-cursor *t* x (+ y 2))
+    (dotimes [i 2] ;; two or more, use a for
+      (t/put-string *t* (name neuron-name)))
+    (t/set-fg-color *t* (output-color rounded-o))
+    (dotimes [i rounded-o]
       (t/move-cursor *t* x (- y i))
+      (t/put-character *t* *output-char*))
+    (t/set-fg-color *t* :blue)
+    (dotimes [i rounded-y]
+      (t/move-cursor *t* (inc x) (- y i))
       (t/put-character *t* *output-char*))))
 
 (defn draw-simulation [objects neuron-map]
