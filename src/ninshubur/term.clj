@@ -31,6 +31,18 @@
 (def output-color
   {0 :black 1 :green 2 :green 3 :yellow 4 :yellow 5 :red})
 
+(defn y-output-char [val]
+  (cond (< val -5) \*
+        (< val 0)  \-
+        (< val 6)  \#
+        :otherwise \!))
+
+(defn y-output-color [val]
+  (cond (< val -5) :blue
+        (< val 0)  :cyan
+        (< val 6)  :magenta
+        :otherwise :red))
+
 (def neuron-positions
   {:a {:x (+ v/*area-width* 5)
        :y 5}
@@ -44,6 +56,7 @@
 (defn draw-neuron-output [[neuron-name state]]
   (let [rounded-o (-> state :o (* 5) (double) (Math/round) (int))
         rounded-y (-> state :y (* 5) (double) (Math/round) (int))
+        abs-y (Math/abs rounded-y)
         {:keys [x y]} (neuron-positions neuron-name)]
     (t/set-fg-color *t* :white)
     (t/move-cursor *t* x (inc y))
@@ -55,13 +68,10 @@
     (dotimes [i rounded-o]
       (t/move-cursor *t* x (- y i))
       (t/put-character *t* *output-char*))
-    (t/set-fg-color *t* (if (> rounded-y 6) :red :blue))
-    (dotimes [i (min rounded-y 6)]
+    (t/set-fg-color *t* (y-output-color rounded-y))
+    (dotimes [i (min abs-y 6)]
       (t/move-cursor *t* (inc x) (- y i))
-      (t/put-character *t*
-                       (if (> rounded-y 5)
-                         *alert-char*
-                         *output-char*)))))
+      (t/put-character *t* (y-output-char rounded-y)))))
 
 (defn draw-simulation [objects neuron-map]
   (t/clear *t*)
