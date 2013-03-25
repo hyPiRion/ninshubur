@@ -58,10 +58,6 @@
                      (mapv (fn [[k v]] [(-> k name symbol) v]))
                      (cl-format true "~4,'0d => ~{~{~s: ~9,5f~}~^, ~}~%"
                                 @lcount))))))))
-    (when (:sim vals)
-      (let [state (-> @bguy :gene nn/translate-cluster sim/init-state)]
-        (in-term
-         (trampoline #(sim/draw-state state)))))
     (when-let [out (:outfile vals)]
       (spit out
             (with-out-str
@@ -69,7 +65,11 @@
     (when-let [afile (:analyze vals)]
       (->> (utils/transform-3d @history)
            (cl-format nil "~{~{~f~^ ~}~%~}")
-           (spit afile)))))
+           (spit afile)))
+    (when (:sim vals)
+      (let [state (-> @bguy :gene nn/translate-cluster sim/init-state)]
+        (in-term
+         (trampoline #(sim/draw-state state)))))))
 
 (defn -main
   "Basic connector to Genetica."
