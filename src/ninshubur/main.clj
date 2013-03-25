@@ -114,10 +114,13 @@
               :default nil]
              ["--tracker-max-speed" "Max tracker speed" :default 4
               :parse-fn #(Integer/parseInt %)]
+             ["--swing" "Use swing for visualization."
+              :default false :flag true]
              ["--sim" "Show simulation" :default true :flag true]
              ["-h" "--help" "Show help" :default false :flag :true])]
     ;; Setup bindings here
-    (binding [v/*tracker-max-speed* (:tracker-max-speed opts)]
+    (binding [v/*tracker-max-speed* (:tracker-max-speed opts)
+              v/*tty-type* (if (:swing opts) :swing :text)]
       (println v/*tracker-max-speed*)
       (when (:help opts)
         (println banner)

@@ -6,3 +6,4 @@
 (def ^:dynamic *nof-blocks* 40)
 (def ^:dynamic *block-max-size* 6)
 (def ^:dynamic *tracker-max-speed*)
+(def ^:dynamic *tty-type*)

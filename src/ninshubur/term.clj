@@ -64,5 +64,5 @@
   (t/get-key-blocking *t*))
 
 (defmacro in-term [& body]
-  `(binding [*t* (t/get-terminal :text)]
+  `(binding [*t* (t/get-terminal v/*tty-type*)]
      (t/in-terminal *t* ~@body)))
