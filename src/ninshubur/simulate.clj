@@ -115,8 +115,11 @@
 (defn draw-state [state]
   (let [time (:time state)
         block (get-in state [:hist time :block])
-        tracker (get-in state [:hist time :tracker])]
-    (t/draw-simulation [tracker block])
+        tracker (get-in state [:hist time :tracker])
+        neurons (-> state
+                    (get-in [:hist time])
+                    (select-keys [:a :b :c :d]))]
+    (t/draw-simulation [tracker block] neurons)
     (case (t/get-key)
       \q state
       :right #(inc-state state)
